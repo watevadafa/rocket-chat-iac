@@ -70,7 +70,7 @@ resource "aws_s3_bucket_acl" "tfstate_bucket_acl" {
 }
 
 resource "aws_s3_bucket_logging" "tfstate_bucket_logging" {
-  bucket = aws_s3_bucket.tfstate_bucket.id
+  bucket        = aws_s3_bucket.tfstate_bucket.id
   target_bucket = aws_s3_bucket.tfstate_logs_bucket.id
   target_prefix = "log/"
 }

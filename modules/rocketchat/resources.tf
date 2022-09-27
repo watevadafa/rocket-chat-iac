@@ -1,10 +1,10 @@
-data "aws_ami" "amazon_linux_2" {
+data "aws_ami" "ami" {
   most_recent = true
   owners      = ["amazon"]
 
   filter {
     name   = "name"
-    values = ["amzn2-ami-kernel-5.10-hvm-*"]
+    values = ["ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*"]
   }
 
   filter {
@@ -33,7 +33,13 @@ resource "aws_key_pair" "instance_key_pair" {
   public_key = tls_private_key.instance_public_key.public_key_openssh
 
   provisioner "local-exec" {
-    command = "echo '${tls_private_key.instance_public_key.private_key_pem}' > ./'${local.instance_key_name}'.pem"
+    when = create
+    command = "echo '${tls_private_key.instance_public_key.private_key_pem}' > ./'${self.key_name}'.pem && chmod 400 ./'${self.key_name}'.pem"
+  }
+
+  provisioner "local-exec" {
+    when = destroy
+    command = "rm -rf ./'${self.key_name}'.pem"
   }
 
   tags = {
@@ -92,13 +98,13 @@ resource "aws_security_group" "allow_ssh_https_http" {
 }
 
 resource "aws_instance" "chat_instance" {
-  ami                         = data.aws_ami.amazon_linux_2.id
+  ami                         = data.aws_ami.ami.id
   instance_type               = var.ec2_instance_type
   key_name                    = aws_key_pair.instance_key_pair.key_name
   security_groups             = ["${aws_security_group.allow_ssh_https_http.name}"]
   disable_api_termination     = false
   associate_public_ip_address = true
-#   user_data                   
+  # user_data                   = file("./modules/rocketchat/setup-instance.sh")
 
   tags = {
     Name = local.instance_name

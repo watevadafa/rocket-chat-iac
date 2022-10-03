@@ -55,3 +55,26 @@ variable "chat_sub_domain" {
   description = "This is sub-domain prefix used for Rocketchat server url."
   default     = "chat"
 }
+
+variable "aws_ami_name" {
+  type        = string
+  description = "This is name prefix used for filtering AWS AMI."
+  default     = "ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*"
+}
+
+variable "aws_ami_virtualization" {
+  type        = string
+  description = "This is virtualization-type used for filtering AWS AMI."
+  default     = "hvm"
+}
+
+variable "aws_ami_architecture" {
+  type        = string
+  description = "This is name prefix used for filtering AWS AMI."
+  default     = "x86_64"
+}
+
+variable "lets_encrypt_email" {
+  type        = string
+  description = "This is email used to get an SSL Certificate from Let's Encrypt for chat server."
+}

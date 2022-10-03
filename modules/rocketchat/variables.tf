@@ -34,5 +34,22 @@ variable "ec2_instance_type" {
 variable "lets_encrypt_email" {
   type        = string
   description = "This is email used to get an SSL Certificate from Let's Encrypt for chat server."
-  default     = "t2.micro"
 }
+
+variable "aws_ami_name" {
+  type        = string
+  description = "This is name prefix used for filtering AWS AMI."
+}
+
+
+variable "aws_ami_virtualization" {
+  type        = string
+  description = "This is virtualization-type used for filtering AWS AMI."
+}
+
+
+variable "aws_ami_architecture" {
+  type        = string
+  description = "This is name prefix used for filtering AWS AMI."
+}
+

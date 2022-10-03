@@ -4,17 +4,17 @@ data "aws_ami" "ami" {
 
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*"]
+    values = ["${var.aws_ami_name}"]
   }
 
   filter {
     name   = "architecture"
-    values = ["x86_64"]
+    values = ["${var.aws_ami_architecture}"]
   }
 
   filter {
     name   = "virtualization-type"
-    values = ["hvm"]
+    values = ["${var.aws_ami_virtualization}"]
   }
 
 }

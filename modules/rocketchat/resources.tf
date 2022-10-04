@@ -104,7 +104,7 @@ resource "aws_instance" "chat_instance" {
   security_groups             = ["${aws_security_group.allow_ssh_https_http.name}"]
   disable_api_termination     = false
   associate_public_ip_address = true
-  # user_data                   = file("./modules/rocketchat/setup-instance.sh")
+  user_data                   = file("./modules/rocketchat/setup-instance.sh")
 
   tags = {
     Name = local.instance_name

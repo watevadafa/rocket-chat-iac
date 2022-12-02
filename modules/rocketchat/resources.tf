@@ -33,12 +33,12 @@ resource "aws_key_pair" "instance_key_pair" {
   public_key = tls_private_key.instance_public_key.public_key_openssh
 
   provisioner "local-exec" {
-    when = create
+    when    = create
     command = "echo '${tls_private_key.instance_public_key.private_key_pem}' > ./'${self.key_name}'.pem && chmod 400 ./'${self.key_name}'.pem"
   }
 
   provisioner "local-exec" {
-    when = destroy
+    when    = destroy
     command = "rm -rf ./'${self.key_name}'.pem"
   }
 
@@ -112,10 +112,20 @@ resource "aws_instance" "chat_instance" {
 
 }
 
+resource "aws_eip" "chat_eip" {
+  vpc = true
+}
+
+resource "aws_eip_association" "chat_eip_association" {
+  instance_id   = aws_instance.chat_instance.id
+  allocation_id = aws_eip.chat_eip.id
+}
+
+
 resource "aws_route53_record" "chat_url" {
   name    = local.chat_url
   type    = "A"
   ttl     = "300"
-  records = ["${aws_instance.chat_instance.public_ip}"]
+  records = ["${aws_eip.chat_eip.public_ip}"]
   zone_id = data.aws_route53_zone.hosted_zone.zone_id
 }

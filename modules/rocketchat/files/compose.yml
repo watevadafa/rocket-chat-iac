@@ -1,42 +1,27 @@
+# Prod compose.yml
+version: '3'
+
 volumes:
   mongodb_data: { driver: local }
-  traefik: { driver: local }
+  traefik: {} 
 
 services:
-
-  mongodb:
-    image: docker.io/bitnami/mongodb:4.4
-    container_name: mongodb
-    restart: on-failure
-    volumes:
-      - mongodb_data:/bitnami/mongodb
-    environment:
-      ALLOW_EMPTY_PASSWORD: "yes"
-      MONGODB_ADVERTISED_HOSTNAME: mongodb
-      MONGODB_ENABLE_JOURNAL: "true"
-      MONGODB_INITIAL_PRIMARY_HOST: mongodb
-      MONGODB_INITIAL_PRIMARY_PORT_NUMBER: "27017"
-      MONGODB_PORT_NUMBER: "27017"
-      MONGODB_REPLICA_SET_MODE: primary
-      MONGODB_REPLICA_SET_NAME: rs0
-
   rocketchat:
     image: registry.rocket.chat/rocketchat/rocket.chat:5.0.0
-    container_name: rocketchat
     restart: on-failure
     labels:
       traefik.enable: "true"
-      traefik.http.routers.rocketchat.rule: "chat.prod.emr.houseworksinc.co"
+      traefik.http.routers.rocketchat.rule: Host(`${DOMAIN}`)
       traefik.http.routers.rocketchat.tls: "true"
       traefik.http.routers.rocketchat.entrypoints: https
       traefik.http.routers.rocketchat.tls.certresolver: le
     environment:
-      MONGO_URL: mongodb://mongodb:27017/rocketchat?replicaSet=rs0
-      MONGO_OPLOG_URL: mongodb://mongodb:27017/local?replicaSet=rs0
+      MONGO_URL: mongodb://mongodb:27017/rocketchat?replicaSet=rs0&directConnection=true
+      MONGO_OPLOG_URL: mongodb://mongodb:27017/local?replicaSet=rs0&directConnection=true
       ROOT_URL: http://localhost:3000
-      PORT: ${PORT:-3000}
+      PORT: 3000
       DEPLOY_METHOD: docker
-      DEPLOY_PLATFORM: ${DEPLOY_PLATFORM}
+      DEPLOY_PLATFORM: linux
       CREATE_TOKENS_FOR_USERS : "true"
       INITIAL_USER: "yes"
       OVERWRITE_SETTING_Show_Setup_Wizard : "Completed"
@@ -49,36 +34,38 @@ services:
       Accounts_Send_Email_When_Deactivating : "False"
       Accounts_Verify_Email_For_External_Accounts : "False"
       Accounts_RegistrationForm : "Disabled"
-      # FileUpload_Storage_Type : AmazonS3
-      # FileUpload_S3_Bucket :
-      # FileUpload_S3_Acl :
-      # FileUpload_S3_AWSAccessKeyId :
-      # FileUpload_S3_AWSSecretAccessKey :
-      # FileUpload_S3_Region :
-      # FileUpload_S3_BucketURL :
     depends_on:
       - mongodb
     expose:
-      - ${PORT:-3000}
+      - 3000
     ports:
-      - "${BIND_IP:-0.0.0.0}:${HOST_PORT:-3000}:${PORT:-3000}"
+      - 3000:3000
 
+  mongodb:
+    image: docker.io/bitnami/mongodb:4.4
+    restart: on-failure
+    volumes:
+      - mongodb_data:/bitnami/mongodb
+    environment:
+      MONGODB_REPLICA_SET_MODE: primary
+      MONGODB_REPLICA_SET_NAME: rs0
+      MONGODB_PORT_NUMBER: 27017
+      MONGODB_INITIAL_PRIMARY_HOST: mongodb
+      MONGODB_INITIAL_PRIMARY_PORT_NUMBER: 27017
+      MONGODB_ADVERTISED_HOSTNAME: mongodb
+      MONGODB_ENABLE_JOURNAL: "true"
+      ALLOW_EMPTY_PASSWORD: "yes"
+  
   traefik:
+    build:
+      context: .
+      dockerfile: ./traefik/Dockerfile
     image: traefik
-    container_name: traefik
     depends_on:
       - rocketchat
-    command:
-      - --api.insecure=false
-      - --providers.docker=true
-      - --providers.docker.exposedbydefault=false
-      - --entrypoints.https.address=:443
-      - --certificatesresolvers.le.acme.tlschallenge=true
-      - --certificatesresolvers.le.acme.email=Support+EmrChat@houseworksinc.co
-      - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
-    ports:
-      - 80:80
-      - 443:443
     volumes:
-      - traefik:/letsencrypt:rw
-      - /run/docker.sock:/var/run/docker.sock:ro
+      - traefik:/etc/traefik/acme
+    ports:
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
+      - "0.0.0.0:5555:5555"

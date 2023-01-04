@@ -13,6 +13,8 @@ terraform init -backend=false
 terraform plan -var-file=terraform.tfvars -out="./plans/backend.tfplan" -target=module.backend
 
 # Step 4: Apply the infrastructure plan
+read -e -p "Apply the Terraform plan? [Y/N] " YN
+[[ $YN == "n" || $YN == "N" || $YN == "" ]] && exit 0
 terraform apply "./plans/backend.tfplan"
 
 # Step 5: Reinitialize terraform to use your newly provisioned backend
